@@ -20,22 +20,23 @@ parseMessage m = case words m of
                   s ->            Unknown (unwords s :: String)
 
 
--- parseMessage l = LogMessage messageType timeStamp message
---                       where
---                         s = words l
---                         (messageType, timeStamp, message) =
---                           case head split of
---                             'E' ->
---                               (Error read (s !! 1) :: Int,
---                               read (s !! 2) :: Int,
---                               unwords (drop 3 s))
---                             'I' ->
---                               (Info,
---                               read (s !! 2) :: Int,
---                               unwords (drop 3 s))
---                             'W' ->
---                               (Warning,
---                               read (s !! 2) :: Int,
---                               unwords (drop 3 s))
+parse :: String -> [LogMessage]
+parse s = map parseMessage (lines s)
 
--- parse :: String -> [LogMessage]
+insert :: LogMessage -> MessageTree -> MessageTree
+insert (LogMessage nc nt ns) (Node lnode (LogMessage c t s) rnode)
+  | nt < t && lnode == Leaf   = Node
+                                  (Node Leaf (LogMessage nc nt ns) Leaf)
+                                  (LogMessage c t s)
+                                  rnode
+  | nt > t && rnode == Leaf   = Node
+                                  lnode
+                                  (LogMessage c t s)
+                                  (Node Leaf (LogMessage nc nt ns) Leaf)
+  | nt < t                    = insert (LogMessage nc nt ns) lnode
+  | nt > t                    = insert (LogMessage nc nt ns) rnode
+insert (LogMessage c nt s) Leaf = Node Leaf (LogMessage c nt s) Leaf
+insert (Unknown _) tree = tree
+
+-- (Node Leaf (LogMessage (Error 70) 4 "Way too many pickles") Leaf)
+-- build :: [LogMessage] -> MessageTree

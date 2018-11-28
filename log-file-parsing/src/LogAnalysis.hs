@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
 module LogAnalysis where
-
 import Log
 
 parseMessage :: String -> LogMessage
@@ -33,10 +32,22 @@ insert (LogMessage nc nt ns) (Node lnode (LogMessage c t s) rnode)
                                   lnode
                                   (LogMessage c t s)
                                   (Node Leaf (LogMessage nc nt ns) Leaf)
-  | nt < t                    = insert (LogMessage nc nt ns) lnode
-  | nt > t                    = insert (LogMessage nc nt ns) rnode
-insert (LogMessage c nt s) Leaf = Node Leaf (LogMessage c nt s) Leaf
-insert (Unknown _) tree = tree
+  | nt < t                    = Node
+                                  (insert (LogMessage nc nt ns) lnode)
+                                  (LogMessage c t s)
+                                  rnode
+  | nt > t                    = Node
+                                  lnode
+                                  (LogMessage c t s)
+                                  (insert (LogMessage nc nt ns) rnode)
+insert lm Leaf = Node Leaf lm Leaf
+insert _ tree = tree
 
--- (Node Leaf (LogMessage (Error 70) 4 "Way too many pickles") Leaf)
--- build :: [LogMessage] -> MessageTree
+build :: [LogMessage] -> MessageTree
+build = foldr insert Lea   f
+-- build [] = Leaf
+-- build (x:xs) = insert x (build xs)
+
+-- inOrder :: MessageTree -> [LogMessage]
+-- inOrder Node lnode logMessage rnode
+--   | lnode == Node
